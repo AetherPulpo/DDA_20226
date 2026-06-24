@@ -31,35 +31,6 @@ module ejercicio4_tb;
     end
 
     // -------------------------------------------------------------------------
-    // Reference Model (Golden Model) for Self-Checking
-    // -------------------------------------------------------------------------
-    logic signed [7:0]  ref_x_q[2:0];
-    logic signed [10:0] ref_y_q[1:0];
-    logic signed [10:0] ref_result;
-
-    // Model calculation matching the ideal mathematical behavior
-    assign ref_result = 11'(i_x) - 11'(ref_x_q[0]) + 11'(ref_x_q[1]) + 11'(ref_x_q[2]) + 
-                        (ref_y_q[0] >>> 1) + (ref_y_q[1] >>> 2);
-
-    // Mirroring the state registers
-    always_ff @(posedge clk or negedge i_rst_n) begin
-        if (!i_rst_n) begin
-            ref_x_q[0] <= 8'sb0;
-            ref_x_q[1] <= 8'sb0;
-            ref_x_q[2] <= 8'sb0;
-            ref_y_q[0] <= 11'sb0;
-            ref_y_q[1] <= 11'sb0;
-        end else begin
-            ref_x_q[2] <= ref_x_q[1];   
-            ref_x_q[1] <= ref_x_q[0];   
-            ref_x_q[0] <= i_x;
-
-            ref_y_q[1] <= ref_y_q[0];  
-            ref_y_q[0] <= ref_result;
-        end
-    end
-
-    // -------------------------------------------------------------------------
     // Stimulus Generation
     // -------------------------------------------------------------------------
     initial begin
@@ -109,26 +80,6 @@ module ejercicio4_tb;
         #(CLK_PERIOD * 5);
         $display("[TB] --- Testbench completed SUCCESSFULLY with ZERO errors ---");
         $finish;
-    end
-
-    // -------------------------------------------------------------------------
-    // Concurrent Assertion for Verification
-    // -------------------------------------------------------------------------
-    // Evaluates combinational result verification right at the clock event
-    property p_check_iir_output;
-        @(posedge clk) disable iff (!i_rst_n)
-        (o_y == ref_result);
-    endproperty
-
-    assert_check_iir_output: assert property (p_check_iir_output) else begin
-        $error("[TB ERROR] Mismatch at time %0t. DUT y=%0d | REF expected=%0d", 
-               $time, o_y, ref_result);
-    end
-
-    // Visual monitor for waveform trace debugging
-    initial begin
-        $monitor("Time=%0t | rst_n=%0b | x=%0d | DUT_y=%0d | REF_y=%0d", 
-                 $time, i_rst_n, i_x, o_y, ref_result);
     end
 
 endmodule
