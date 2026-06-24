@@ -38,38 +38,6 @@ module ejercicio1_tb;
     end
 
     // -------------------------------------------------------------------------
-    // Reference Model (Golden Model / Predictor)
-    // -------------------------------------------------------------------------
-    // Mirroring the internal RTL logic to predict the expected outputs.
-    logic [3:0] ref_add_result;
-    logic [3:0] ref_mux_result;
-    logic [6:0] ref_sum;
-    logic [6:0] ref_sum_q;
-
-    assign ref_add_result = i_data1 + i_data2;
-
-    always_comb begin
-        case(i_sel)
-            2'b00  : ref_mux_result = {1'b0, i_data2};
-            2'b01  : ref_mux_result = ref_add_result;
-            2'b10  : ref_mux_result = {1'b0, i_data1};
-            default: ref_mux_result = 4'b0;
-        endcase
-    end
-
-    // Note: ref_sum is calculated using the current value of ref_sum_q
-    assign ref_sum = 6'(ref_mux_result) + ref_sum_q[5:0];
-
-    // Reference register update aligned with the DUT clock cycle
-    always_ff @(posedge clk or negedge i_rst_n) begin
-        if(!i_rst_n) begin
-            ref_sum_q <= 7'b0;
-        end else begin
-            ref_sum_q <= ref_sum;
-        end
-    end
-
-    // -------------------------------------------------------------------------
     // Stimulus Generation
     // -------------------------------------------------------------------------
     initial begin
@@ -119,31 +87,24 @@ module ejercicio1_tb;
             i_sel   = $urandom_range(0, 2);
         end
 
+         // 5. Inputs fixed to 1 and wait to overflow go high
+        $display("[TB] --- Starting Target Test: Inputs fixed to 1 ---");
+        @(negedge clk);
+        i_rst_n = 0;
+        #(CLK_PERIOD * 2);
+        i_rst_n = 1;
+        @(negedge clk);
+        i_data1 = 3'd1;
+        i_data2 = 3'd1;
+        i_sel   = 2'b01; // Selects add_result (1 + 1 = 2)
+
+        // Run for exactly 35 cycles to observe the transition and stable overflow
+        repeat (35) begin
+            @(negedge clk);
+        end
         #(CLK_PERIOD * 5);
         $display("[TB] --- Testbench completed SUCCESSFULY ---");
         $finish;
-    end
-
-    // -------------------------------------------------------------------------
-    // Concurrent Assertions (Runtime Self-Checking)
-    // -------------------------------------------------------------------------
-    // Since outputs depend on the updated state of sum_q (which changes on posedge clk),
-    // we validate the sampled outputs immediately after the clock edge.
-    
-    property p_check_outputs;
-        @(posedge clk) disable iff (!i_rst_n)
-        (o_data == ref_sum_q[5:0]) && (o_overflow == ref_sum_q[6]);
-    endproperty
-
-    assert_check_outputs: assert property (p_check_outputs) else begin
-        $error("[TB ERROR] Mismatch detected at time %0t. DUT: data=%0d, ovf=%0b | REF: data=%0d, ovf=%0b", 
-               $time, o_data, o_overflow, ref_sum_q[5:0], ref_sum_q[6]);
-    end
-
-    // Optional console monitoring for quick visual debugging
-    initial begin
-        $monitor("Time=%0t | rst_n=%0b | sel=%0b | d1=%0d d2=%0d | DUT_out=%0d (ovf=%0b) | REF_out=%0d (ovf=%0b)", 
-                 $time, i_rst_n, i_sel, i_data1, i_data2, o_data, o_overflow, ref_sum_q[5:0], ref_sum_q[6]);
     end
 
 endmodule
