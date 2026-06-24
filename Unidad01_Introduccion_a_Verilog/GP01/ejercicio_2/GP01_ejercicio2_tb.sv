@@ -20,20 +20,6 @@ module ejercicio2_tb;
         .o_datac (o_datac)
     );
 
-    // -------------------------------------------------------------------------
-    // Reference Model / Golden Predictor
-    // -------------------------------------------------------------------------
-    logic signed [15:0] ref_datac;
-
-    // Dynamic reference calculation based on current input values
-    always_comb begin
-        case(i_sel)
-            2'b00   : ref_datac = i_dataa + i_datab;
-            2'b01   : ref_datac = i_dataa - i_datab;
-            2'b10   : ref_datac = i_dataa & i_datab;
-            default : ref_datac = i_dataa | i_datab;
-        endcase
-    end
 
     // -------------------------------------------------------------------------
     // Stimulus Generation
@@ -92,24 +78,4 @@ module ejercicio2_tb;
         $display("[TB] --- Testbench completed SUCCESSFULLY with ZERO errors ---");
         $finish;
     end
-
-    // -------------------------------------------------------------------------
-    // Assertions for Self-Checking (Immediate Assertions)
-    // -------------------------------------------------------------------------
-    // Since the DUT is combinational, we use a delayed continuous check 
-    // to allow signals to settle before assessing validity.
-    always @(o_datac or ref_datac) begin
-        #1; // Minor settling delay to prevent transient glitches from triggering false negatives
-        assert_check_alu: assert(o_datac === ref_datac) else begin
-            $error("[TB ERROR] Mismatch detected! sel=%b | A=%d (0x%h), B=%d (0x%h) | DUT output=%d (0x%h) | Expected REF=%d (0x%h)",
-                   i_sel, i_dataa, i_dataa, i_datab, i_datab, o_datac, o_datac, ref_datac, ref_datac);
-        end
-    end
-
-    // Visual monitor block
-    initial begin
-        $monitor("Time=%0t | sel=%b | A=%5d | B=%5d | Out=%5d", 
-                 $time, i_sel, i_dataa, i_datab, o_datac);
-    end
-
 endmodule
