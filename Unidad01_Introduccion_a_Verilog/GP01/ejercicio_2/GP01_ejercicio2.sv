@@ -5,7 +5,7 @@ module ejercicio2(
     input wire signed  [16-1:0] i_dataa,
     input wire signed  [16-1:0] i_datab,
         //ctrl ports
-    input wire  [2-1:0] i_sel,
+    input wire  [2-1:0] i_sel
 );
 
 //SIGNAL DECLARATIONS
