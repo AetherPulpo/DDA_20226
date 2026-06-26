@@ -10,7 +10,7 @@ module ejercicio4_tb;
     logic               clk;
     logic               i_rst_n;
     logic signed [7:0]  i_x;
-    wire  signed [10:0] o_y;
+    wire  signed [11:0] o_y;
 
     // -------------------------------------------------------------------------
     // DUT (Device Under Test) Instantiation
@@ -51,6 +51,18 @@ module ejercicio4_tb;
         // With x fixed to 127, y should converge towards a maximal positive value.
         $display("[TB] Running Scenario A: Step Response (x = 127)");
         repeat (40) begin
+            @(negedge clk);
+            i_x = 8'sd127;
+        end
+        
+        //Worst case scenario:
+        @(negedge clk);
+        i_x = -8'sd128;
+
+        @(negedge clk);
+        i_x = 8'sd127;
+        $display("[TB] Running Scenario A: worst case scenario (x = -128 followed by x = 127)");
+        repeat (5) begin
             @(negedge clk);
             i_x = 8'sd127;
         end
